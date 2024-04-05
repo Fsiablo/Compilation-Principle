@@ -1,0 +1,355 @@
+Microsoft (R) Macro Assembler Version 6.11		    05/08/23 17:55:52
+tempfile.asm						     Page 1 - 1
+
+
+				assume cs:code,ds:data,ss:stack,es:extended
+ 0000				extended segment
+ 0000  0400 [				db 1024 dup (0)
+        00
+       ]
+ 0400				extended ends
+ 0000				stack segment
+ 0000  0400 [				db 1024 dup (0)
+        00
+       ]
+ 0400				stack ends
+ 0000				data segment
+ 0000  0100 [				t_buff_p db 256 dup (24h)
+        24
+       ]
+ 0100  0100 [				t_buff_s db 256 dup (0)
+        00
+       ]
+ 0200 0A 4F 75 74 70 75			t_w db 0ah,'Output:',0
+       74 3A 00
+ 0209 0A 49 6E 70 75 74			t_r db 0ah,'Input:',0
+       3A 00
+ 0211 0000				_m dw 0
+ 0213 0000				_k dw 0
+ 0215 0000				_result dw 0
+ 0217 0000				_a dw 0
+ 0219				data ends
+ 0000				code segment
+ 0000				start:
+ 0000  B8 ---- R			mov ax,extended
+ 0003  8E C0				mov es,ax
+ 0005  B8 ---- R			mov ax,stack
+ 0008  8E D0				mov ss,ax
+ 000A  BC 0400				mov sp,1024
+ 000D  8B EC				mov bp,sp
+ 000F  B8 ---- R			mov ax,data
+ 0012  8E D8				mov ds,ax
+ 0014				_seg1:
+ 0014  E8 0041				call _read
+ 0017  26: A3 0000			mov es:[0],ax
+ 001B				_seg2:
+ 001B  26: A1 0000			mov ax,es:[0]
+ 001F  A3 0211 R			mov _m,ax
+ 0022				_seg3:
+ 0022  E8 0033				call _read
+ 0025  26: A3 0002			mov es:[2],ax
+ 0029				_seg4:
+ 0029  26: A1 0002			mov ax,es:[2]
+ 002D  A3 0213 R			mov _k,ax
+ 0030				_seg5:
+ 0030  A1 0213 R			mov ax,_k
+ 0033  50				push ax
+ 0034				_seg6:
+ 0034  A1 0211 R			mov ax,_m
+ 0037  50				push ax
+ 0038				_seg7:
+ 0038  E8 00CB				call _comp
+ 003B  26: A3 0004			mov es:[4],ax
+ 003F				_seg8:
+ 003F  26: A1 0004			mov ax,es:[4]
+ 0043  A3 0215 R			mov _result,ax
+ 0046				_seg9:
+ 0046  A1 0215 R			mov ax,_result
+ 0049  50				push ax
+ 004A				_seg10:
+ 004A  E8 0066				call _write
+ 004D  26: A3 0006			mov es:[6],ax
+ 0051  E8 009F				call dispcrlf
+ 0054				quit:
+ 0054  B4 4C				mov ah,4ch
+ 0056  CD 21				int 21h
+ 0058				_read:
+ 0058  55			    push bp
+ 0059  8B EC			    mov bp,sp
+ 005B  BB 0209 R		    mov bx,offset t_r
+ 005E  E8 0006			    call _print
+ 0061  BB 0100 R		    mov bx,offset t_buff_s
+ 0064  BF 0000			    mov di,0
+ 0067  BE 0000			_print:mov si,0
+ 006A  BF 0000 R			mov di,offset t_buff_p
+ 006D				_r_lp_1:
+ 006D  B4 01			    mov ah,1
+ 006F  CD 21			    int 21h
+ 0071  3C 0D			    cmp al,0dh
+ 0073  74 05			    je _r_brk_1
+ 0075  88 01			    mov ds:[bx+di],al
+ 0077  47			    inc di
+ 0078  EB F3			    jmp short _r_lp_1
+ 007A				_r_brk_1:
+ 007A  B4 02			    mov ah,2
+ 007C  B2 0A			    mov dl,0ah
+ 007E  CD 21			    int 21h
+ 0080  B8 0000			    mov ax,0
+ 0083  BE 0000			    mov si,0
+ 0086  B9 000A			    mov cx,10
+ 0089				_r_lp_2:
+ 0089  8A 10			    mov dl,ds:[bx+si]
+ 008B  80 FA 30			    cmp dl,30h
+ 008E  72 15			    jb _r_brk_2
+ 0090  80 FA 39			    cmp dl,39h
+ 0093  77 10			    ja _r_brk_2
+ 0095  80 EA 30			    sub dl,30h
+ 0098  88 10			    mov ds:[bx+si],dl
+ 009A  F7 E1			    mul cx
+ 009C  8A 10			    mov dl,ds:[bx+si]
+ 009E  B6 00			    mov dh,0
+ 00A0  03 C2			    add ax,dx
+ 00A2  46				inc si
+ 00A3  EB E4				jmp short _r_lp_2
+ 00A5				_r_brk_2:
+ 00A5  8B CF			    mov cx,di
+ 00A7  BE 0000				mov si,0
+ 00AA				_r_lp_3:
+ 00AA  C6 00 00			    mov byte ptr ds:[bx+si],0
+ 00AD  E2 FB				loop _r_lp_3
+ 00AF  8B E5				mov sp,bp
+ 00B1  5D				pop bp
+ 00B2  C3				ret
+ 00B3				_write:
+ 00B3  50			    push ax
+ 00B4  53			    push bx
+ 00B5  52			    push dx
+ 00B6  85 C0			    test ax,ax;判断是零、正数或负数
+ 00B8  75 08			    jnz dsiw1;不是零，跳转
+ 00BA  B2 30			    mov dl,'0'
+ 00BC  B4 02			    mov ah,2
+ 00BE  CD 21			    int 21h
+ 00C0  EB 2D			    jmp dsiw5;转向显示
+ 00C2  79 0C			dsiw1:jns dsiw2;是正数，跳转
+ 00C4  8B D8			    mov bx,ax
+ 00C6  B2 2D			    mov dl,'-';是负数，显示负号
+ 00C8  B4 02			    mov ah,2
+ 00CA  CD 21			    int 21h
+ 00CC  8B C3			    mov ax,bx
+ 00CE  F7 D8			    neg ax;数据求补（绝对值）
+ 00D0  BB 000A			dsiw2:mov bx,10
+ 00D3  53			    push bx;10压入堆栈，作为退出标志
+ 00D4  83 F8 00			dsiw3:cmp ax,0  ;数据（商）为零，转向保存
+ 00D7  74 0A			    jz dsiw4
+ 00D9  33 D2			    xor dx,dx   ;扩展被除数为DX.AX
+ 00DB  F7 F3			    div bx  ;数据除以10：DX.AX÷10
+ 00DD  80 C2 30			    add dl,30h  ;余数（0～9）转换为ASCII
+ 00E0  52			    push dx ;数据先低位后高位压入堆栈
+ 00E1  EB F1			    jmp dsiw3
+ 00E3  5A			dsiw4:pop dx
+ 00E4  80 FA 0A			    cmp dl,10
+ 00E7  74 06			    je dsiw5
+ 00E9  B4 02			    mov ah,2;
+ 00EB  CD 21			    int 21h
+ 00ED  EB F4			    jmp dsiw4
+ 00EF  5A			dsiw5:pop dx
+ 00F0  5B			    pop bx
+ 00F1  58			    pop ax
+ 00F2  C3			    ret
+ 00F3				dispcrlf:
+ 00F3  50			    push ax
+ 00F4  52			    push dx
+ 00F5  B2 0D			    mov dl,0dh  ;输出回车字符
+ 00F7  B4 02			    mov ah,2
+ 00F9  CD 21			    int 21h
+ 00FB  B2 0A			    mov dl, 0ah  ;输出换行字符
+ 00FD  CD 21			    int 21h
+ 00FF  5A			    pop dx
+ 0100  58			    pop ax
+ 0101  C3			    ret
+ 0102  B0 4C			ex: mov al,4ch
+ 0104  CD 21			    int 21h
+
+ 0106  55			_comp:push bp
+ 0107  8B EC				mov bp,sp
+ 0109  83 EC 02				sub sp,2
+ 010C				_seg12:
+ 010C  8B 46 04				mov ax,ss:[bp+4]
+ 010F  50				push ax
+ 0110				_seg13:
+ 0110  E8 FFA0				call _write
+ 0113  26: A3 0008			mov es:[8],ax
+ 0117  E8 FFD9				call dispcrlf
+ 011A				_seg14:
+ 011A  8B 46 06				mov ax,ss:[bp+6]
+ 011D  50				push ax
+ 011E				_seg15:
+ 011E  E8 FF92				call _write
+ 0121  26: A3 000A			mov es:[10],ax
+ 0125  E8 FFCB				call dispcrlf
+ 0128				_seg16:
+ 0128  BA 0001				mov dx,1
+ 012B  8B 46 04				mov ax,ss:[bp+4]
+ 012E  3B 46 06				cmp ax,ss:[bp+6]
+ 0131  74 03				je _eq1
+ 0133  BA 0000				mov dx,0
+ 0136  26: 89 16 000C		_eq1: mov es:[12],dx
+ 013B				_seg17:
+ 013B  BA 0001				mov dx,1
+ 013E  8B 46 06				mov ax,ss:[bp+6]
+ 0141  83 F8 00				cmp ax,0
+ 0144  74 03				je _eq2
+ 0146  BA 0000				mov dx,0
+ 0149  26: 89 16 000E		_eq2: mov es:[14],dx
+ 014E				_seg18:
+ 014E  BA 0001				mov dx,1
+ 0151  26: A1 000C			mov ax,es:[12]
+ 0155  83 F8 00				cmp ax,0
+ 0158  75 0C				jne _or1
+ 015A  26: A1 000E			mov ax,es:[14]
+ 015E  83 F8 00				cmp ax,0
+ 0161  75 03				jne _or1
+ 0163  BA 0000				mov dx,0
+ 0166  26: 89 16 0010		_or1: mov es:[16],dx
+ 016B				_seg19:
+ 016B  26: A1 0010			mov ax,es:[16]
+ 016F  83 F8 00				cmp ax,0
+ 0172  74 05				je _ez1
+ 0174  EA ---- 017F R			jmp far ptr _seg21
+ 0179  90			_ez1: nop
+ 017A				_seg20:
+ 017A  EA ---- 0186 R			jmp far ptr _seg22
+ 017F				_seg21:
+ 017F  B8 0001				mov ax,1
+ 0182  8B E5				mov sp,bp
+ 0184  5D				pop bp
+ 0185  C3				ret
+ 0186				_seg22:
+ 0186  8B 46 04				mov ax,ss:[bp+4]
+ 0189  83 E8 01				sub ax,1
+ 018C  26: A3 0012			mov es:[18],ax
+ 0190				_seg23:
+ 0190  8B 46 06				mov ax,ss:[bp+6]
+ 0193  50				push ax
+ 0194				_seg24:
+ 0194  26: A1 0012			mov ax,es:[18]
+ 0198  50				push ax
+ 0199				_seg25:
+ 0199  E8 FF6A				call _comp
+ 019C  26: A3 0014			mov es:[20],ax
+ 01A0				_seg26:
+ 01A0  8B 46 04				mov ax,ss:[bp+4]
+ 01A3  83 E8 01				sub ax,1
+ 01A6  26: A3 0016			mov es:[22],ax
+ 01AA				_seg27:
+ 01AA  8B 46 06				mov ax,ss:[bp+6]
+ 01AD  83 E8 01				sub ax,1
+ 01B0  26: A3 0018			mov es:[24],ax
+ 01B4				_seg28:
+ 01B4  26: A1 0018			mov ax,es:[24]
+ 01B8  50				push ax
+ 01B9				_seg29:
+ 01B9  26: A1 0016			mov ax,es:[22]
+ 01BD  50				push ax
+ 01BE				_seg30:
+ 01BE  E8 FF45				call _comp
+ 01C1  26: A3 001A			mov es:[26],ax
+ 01C5				_seg31:
+ 01C5  26: A1 0014			mov ax,es:[20]
+ 01C9  26: 03 06 001A			add ax,es:[26]
+ 01CE  26: A3 001C			mov es:[28],ax
+ 01D2				_seg32:
+ 01D2  26: A1 001C			mov ax,es:[28]
+ 01D6  A3 0217 R			mov _a,ax
+ 01D9				_seg33:
+ 01D9  A1 0217 R			mov ax,_a
+ 01DC  8B E5				mov sp,bp
+ 01DE  5D				pop bp
+ 01DF  C3				ret
+ 01E0				code ends
+				end start
+Microsoft (R) Macro Assembler Version 6.11		    05/08/23 17:55:52
+tempfile.asm						     Symbols 2 - 1
+
+
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+code . . . . . . . . . . . . . .	16 Bit	 01E0	  Para	  Private 
+data . . . . . . . . . . . . . .	16 Bit	 0219	  Para	  Private 
+extended . . . . . . . . . . . .	16 Bit	 0400	  Para	  Private 
+stack  . . . . . . . . . . . . .	16 Bit	 0400	  Para	  Private 
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+_a . . . . . . . . . . . . . . .	Word	 0217	  data	
+_comp  . . . . . . . . . . . . .	L Near	 0106	  code	
+_eq1 . . . . . . . . . . . . . .	L Near	 0136	  code	
+_eq2 . . . . . . . . . . . . . .	L Near	 0149	  code	
+_ez1 . . . . . . . . . . . . . .	L Near	 0179	  code	
+_k . . . . . . . . . . . . . . .	Word	 0213	  data	
+_m . . . . . . . . . . . . . . .	Word	 0211	  data	
+_or1 . . . . . . . . . . . . . .	L Near	 0166	  code	
+_print . . . . . . . . . . . . .	L Near	 0067	  code	
+_r_brk_1 . . . . . . . . . . . .	L Near	 007A	  code	
+_r_brk_2 . . . . . . . . . . . .	L Near	 00A5	  code	
+_r_lp_1  . . . . . . . . . . . .	L Near	 006D	  code	
+_r_lp_2  . . . . . . . . . . . .	L Near	 0089	  code	
+_r_lp_3  . . . . . . . . . . . .	L Near	 00AA	  code	
+_read  . . . . . . . . . . . . .	L Near	 0058	  code	
+_result  . . . . . . . . . . . .	Word	 0215	  data	
+_seg10 . . . . . . . . . . . . .	L Near	 004A	  code	
+_seg12 . . . . . . . . . . . . .	L Near	 010C	  code	
+_seg13 . . . . . . . . . . . . .	L Near	 0110	  code	
+_seg14 . . . . . . . . . . . . .	L Near	 011A	  code	
+_seg15 . . . . . . . . . . . . .	L Near	 011E	  code	
+_seg16 . . . . . . . . . . . . .	L Near	 0128	  code	
+_seg17 . . . . . . . . . . . . .	L Near	 013B	  code	
+_seg18 . . . . . . . . . . . . .	L Near	 014E	  code	
+_seg19 . . . . . . . . . . . . .	L Near	 016B	  code	
+_seg1  . . . . . . . . . . . . .	L Near	 0014	  code	
+_seg20 . . . . . . . . . . . . .	L Near	 017A	  code	
+_seg21 . . . . . . . . . . . . .	L Near	 017F	  code	
+_seg22 . . . . . . . . . . . . .	L Near	 0186	  code	
+_seg23 . . . . . . . . . . . . .	L Near	 0190	  code	
+_seg24 . . . . . . . . . . . . .	L Near	 0194	  code	
+_seg25 . . . . . . . . . . . . .	L Near	 0199	  code	
+_seg26 . . . . . . . . . . . . .	L Near	 01A0	  code	
+_seg27 . . . . . . . . . . . . .	L Near	 01AA	  code	
+_seg28 . . . . . . . . . . . . .	L Near	 01B4	  code	
+_seg29 . . . . . . . . . . . . .	L Near	 01B9	  code	
+_seg2  . . . . . . . . . . . . .	L Near	 001B	  code	
+_seg30 . . . . . . . . . . . . .	L Near	 01BE	  code	
+_seg31 . . . . . . . . . . . . .	L Near	 01C5	  code	
+_seg32 . . . . . . . . . . . . .	L Near	 01D2	  code	
+_seg33 . . . . . . . . . . . . .	L Near	 01D9	  code	
+_seg3  . . . . . . . . . . . . .	L Near	 0022	  code	
+_seg4  . . . . . . . . . . . . .	L Near	 0029	  code	
+_seg5  . . . . . . . . . . . . .	L Near	 0030	  code	
+_seg6  . . . . . . . . . . . . .	L Near	 0034	  code	
+_seg7  . . . . . . . . . . . . .	L Near	 0038	  code	
+_seg8  . . . . . . . . . . . . .	L Near	 003F	  code	
+_seg9  . . . . . . . . . . . . .	L Near	 0046	  code	
+_write . . . . . . . . . . . . .	L Near	 00B3	  code	
+dispcrlf . . . . . . . . . . . .	L Near	 00F3	  code	
+dsiw1  . . . . . . . . . . . . .	L Near	 00C2	  code	
+dsiw2  . . . . . . . . . . . . .	L Near	 00D0	  code	
+dsiw3  . . . . . . . . . . . . .	L Near	 00D4	  code	
+dsiw4  . . . . . . . . . . . . .	L Near	 00E3	  code	
+dsiw5  . . . . . . . . . . . . .	L Near	 00EF	  code	
+ex . . . . . . . . . . . . . . .	L Near	 0102	  code	
+quit . . . . . . . . . . . . . .	L Near	 0054	  code	
+start  . . . . . . . . . . . . .	L Near	 0000	  code	
+t_buff_p . . . . . . . . . . . .	Byte	 0000	  data	
+t_buff_s . . . . . . . . . . . .	Byte	 0100	  data	
+t_r  . . . . . . . . . . . . . .	Byte	 0209	  data	
+t_w  . . . . . . . . . . . . . .	Byte	 0200	  data	
+
+	   0 Warnings
+	   0 Errors

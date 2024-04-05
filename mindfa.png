@@ -1,0 +1,10 @@
+digraph mindfa {
+	graph [rankdir=LR]
+	0 [color=red]
+	1 [color=orange]
+	2
+	1 -> 1 [label=a]
+	1 -> 1 [label=b]
+	1 -> 2 [label=c]
+	2 -> 0 [label=c]
+}

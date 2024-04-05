@@ -1,0 +1,257 @@
+Microsoft (R) Macro Assembler Version 6.11		    05/08/23 16:43:00
+tempfile.asm						     Page 1 - 1
+
+
+				assume cs:code,ds:data,ss:stack,es:extended
+ 0000				extended segment
+ 0000  0400 [				db 1024 dup (0)
+        00
+       ]
+ 0400				extended ends
+ 0000				stack segment
+ 0000  0400 [				db 1024 dup (0)
+        00
+       ]
+ 0400				stack ends
+ 0000				data segment
+ 0000  0100 [				t_buff_p db 256 dup (24h)
+        24
+       ]
+ 0100  0100 [				t_buff_s db 256 dup (0)
+        00
+       ]
+ 0200 0A 4F 75 74 70 75			t_w db 0ah,'Output:',0
+       74 3A 00
+ 0209 0A 49 6E 70 75 74			t_r db 0ah,'Input:',0
+       3A 00
+ 0211 0000				_a dw 0
+ 0213 0000				_N dw 0
+ 0215 0000				_result dw 0
+ 0217				data ends
+ 0000				code segment
+ 0000				start:
+ 0000  B8 ---- R			mov ax,extended
+ 0003  8E C0				mov es,ax
+ 0005  B8 ---- R			mov ax,stack
+ 0008  8E D0				mov ss,ax
+ 000A  BC 0400				mov sp,1024
+ 000D  8B EC				mov bp,sp
+ 000F  B8 ---- R			mov ax,data
+ 0012  8E D8				mov ds,ax
+ 0014				_seg1:
+ 0014  B8 0001				mov ax,1
+ 0017  A3 0211 R			mov _a,ax
+ 001A				_seg2:
+ 001A  E8 0043				call _read
+ 001D  26: A3 0000			mov es:[0],ax
+ 0021				_seg3:
+ 0021  26: A1 0000			mov ax,es:[0]
+ 0025  A3 0213 R			mov _N,ax
+ 0028				_seg4:
+ 0028  B8 0003				mov ax,3
+ 002B  50				push ax
+ 002C				_seg5:
+ 002C  B8 0004				mov ax,4
+ 002F  50				push ax
+ 0030				_seg6:
+ 0030  E8 00DB				call _sum
+ 0033  26: A3 0002			mov es:[2],ax
+ 0037				_seg7:
+ 0037  26: A1 0002			mov ax,es:[2]
+ 003B  50				push ax
+ 003C				_seg8:
+ 003C  A1 0213 R			mov ax,_N
+ 003F  50				push ax
+ 0040				_seg9:
+ 0040  E8 00CB				call _sum
+ 0043  26: A3 0004			mov es:[4],ax
+ 0047				_seg10:
+ 0047  26: A1 0004			mov ax,es:[4]
+ 004B  A3 0211 R			mov _a,ax
+ 004E				_seg11:
+ 004E  A1 0211 R			mov ax,_a
+ 0051  50				push ax
+ 0052				_seg12:
+ 0052  E8 0066				call _write
+ 0055  26: A3 0006			mov es:[6],ax
+ 0059  E8 009F				call dispcrlf
+ 005C				quit:
+ 005C  B4 4C				mov ah,4ch
+ 005E  CD 21				int 21h
+ 0060				_read:
+ 0060  55			    push bp
+ 0061  8B EC			    mov bp,sp
+ 0063  BB 0209 R		    mov bx,offset t_r
+ 0066  E8 0006			    call _print
+ 0069  BB 0100 R		    mov bx,offset t_buff_s
+ 006C  BF 0000			    mov di,0
+ 006F  BE 0000			_print:mov si,0
+ 0072  BF 0000 R			mov di,offset t_buff_p
+ 0075				_r_lp_1:
+ 0075  B4 01			    mov ah,1
+ 0077  CD 21			    int 21h
+ 0079  3C 0D			    cmp al,0dh
+ 007B  74 05			    je _r_brk_1
+ 007D  88 01			    mov ds:[bx+di],al
+ 007F  47			    inc di
+ 0080  EB F3			    jmp short _r_lp_1
+ 0082				_r_brk_1:
+ 0082  B4 02			    mov ah,2
+ 0084  B2 0A			    mov dl,0ah
+ 0086  CD 21			    int 21h
+ 0088  B8 0000			    mov ax,0
+ 008B  BE 0000			    mov si,0
+ 008E  B9 000A			    mov cx,10
+ 0091				_r_lp_2:
+ 0091  8A 10			    mov dl,ds:[bx+si]
+ 0093  80 FA 30			    cmp dl,30h
+ 0096  72 15			    jb _r_brk_2
+ 0098  80 FA 39			    cmp dl,39h
+ 009B  77 10			    ja _r_brk_2
+ 009D  80 EA 30			    sub dl,30h
+ 00A0  88 10			    mov ds:[bx+si],dl
+ 00A2  F7 E1			    mul cx
+ 00A4  8A 10			    mov dl,ds:[bx+si]
+ 00A6  B6 00			    mov dh,0
+ 00A8  03 C2			    add ax,dx
+ 00AA  46				inc si
+ 00AB  EB E4				jmp short _r_lp_2
+ 00AD				_r_brk_2:
+ 00AD  8B CF			    mov cx,di
+ 00AF  BE 0000				mov si,0
+ 00B2				_r_lp_3:
+ 00B2  C6 00 00			    mov byte ptr ds:[bx+si],0
+ 00B5  E2 FB				loop _r_lp_3
+ 00B7  8B E5				mov sp,bp
+ 00B9  5D				pop bp
+ 00BA  C3				ret
+ 00BB				_write:
+ 00BB  50			    push ax
+ 00BC  53			    push bx
+ 00BD  52			    push dx
+ 00BE  85 C0			    test ax,ax;判断是零、正数或负数
+ 00C0  75 08			    jnz dsiw1;不是零，跳转
+ 00C2  B2 30			    mov dl,'0'
+ 00C4  B4 02			    mov ah,2
+ 00C6  CD 21			    int 21h
+ 00C8  EB 2D			    jmp dsiw5;转向显示
+ 00CA  79 0C			dsiw1:jns dsiw2;是正数，跳转
+ 00CC  8B D8			    mov bx,ax
+ 00CE  B2 2D			    mov dl,'-';是负数，显示负号
+ 00D0  B4 02			    mov ah,2
+ 00D2  CD 21			    int 21h
+ 00D4  8B C3			    mov ax,bx
+ 00D6  F7 D8			    neg ax;数据求补（绝对值）
+ 00D8  BB 000A			dsiw2:mov bx,10
+ 00DB  53			    push bx;10压入堆栈，作为退出标志
+ 00DC  83 F8 00			dsiw3:cmp ax,0  ;数据（商）为零，转向保存
+ 00DF  74 0A			    jz dsiw4
+ 00E1  33 D2			    xor dx,dx   ;扩展被除数为DX.AX
+ 00E3  F7 F3			    div bx  ;数据除以10：DX.AX÷10
+ 00E5  80 C2 30			    add dl,30h  ;余数（0～9）转换为ASCII
+ 00E8  52			    push dx ;数据先低位后高位压入堆栈
+ 00E9  EB F1			    jmp dsiw3
+ 00EB  5A			dsiw4:pop dx
+ 00EC  80 FA 0A			    cmp dl,10
+ 00EF  74 06			    je dsiw5
+ 00F1  B4 02			    mov ah,2;
+ 00F3  CD 21			    int 21h
+ 00F5  EB F4			    jmp dsiw4
+ 00F7  5A			dsiw5:pop dx
+ 00F8  5B			    pop bx
+ 00F9  58			    pop ax
+ 00FA  C3			    ret
+ 00FB				dispcrlf:
+ 00FB  50			    push ax
+ 00FC  52			    push dx
+ 00FD  B2 0D			    mov dl,0dh  ;输出回车字符
+ 00FF  B4 02			    mov ah,2
+ 0101  CD 21			    int 21h
+ 0103  B2 0A			    mov dl, 0ah  ;输出换行字符
+ 0105  CD 21			    int 21h
+ 0107  5A			    pop dx
+ 0108  58			    pop ax
+ 0109  C3			    ret
+ 010A  B0 4C			ex: mov al,4ch
+ 010C  CD 21			    int 21h
+
+ 010E  55			_sum:push bp
+ 010F  8B EC				mov bp,sp
+ 0111  83 EC 02				sub sp,2
+ 0114				_seg14:
+ 0114  8B 46 04				mov ax,ss:[bp+4]
+ 0117  03 46 06				add ax,ss:[bp+6]
+ 011A  26: A3 0008			mov es:[8],ax
+ 011E				_seg15:
+ 011E  26: A1 0008			mov ax,es:[8]
+ 0122  A3 0215 R			mov _result,ax
+ 0125				_seg16:
+ 0125  A1 0215 R			mov ax,_result
+ 0128  8B E5				mov sp,bp
+ 012A  5D				pop bp
+ 012B  C3				ret
+ 012C				code ends
+				end start
+Microsoft (R) Macro Assembler Version 6.11		    05/08/23 16:43:00
+tempfile.asm						     Symbols 2 - 1
+
+
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+code . . . . . . . . . . . . . .	16 Bit	 012C	  Para	  Private 
+data . . . . . . . . . . . . . .	16 Bit	 0217	  Para	  Private 
+extended . . . . . . . . . . . .	16 Bit	 0400	  Para	  Private 
+stack  . . . . . . . . . . . . .	16 Bit	 0400	  Para	  Private 
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+_N . . . . . . . . . . . . . . .	Word	 0213	  data	
+_a . . . . . . . . . . . . . . .	Word	 0211	  data	
+_print . . . . . . . . . . . . .	L Near	 006F	  code	
+_r_brk_1 . . . . . . . . . . . .	L Near	 0082	  code	
+_r_brk_2 . . . . . . . . . . . .	L Near	 00AD	  code	
+_r_lp_1  . . . . . . . . . . . .	L Near	 0075	  code	
+_r_lp_2  . . . . . . . . . . . .	L Near	 0091	  code	
+_r_lp_3  . . . . . . . . . . . .	L Near	 00B2	  code	
+_read  . . . . . . . . . . . . .	L Near	 0060	  code	
+_result  . . . . . . . . . . . .	Word	 0215	  data	
+_seg10 . . . . . . . . . . . . .	L Near	 0047	  code	
+_seg11 . . . . . . . . . . . . .	L Near	 004E	  code	
+_seg12 . . . . . . . . . . . . .	L Near	 0052	  code	
+_seg14 . . . . . . . . . . . . .	L Near	 0114	  code	
+_seg15 . . . . . . . . . . . . .	L Near	 011E	  code	
+_seg16 . . . . . . . . . . . . .	L Near	 0125	  code	
+_seg1  . . . . . . . . . . . . .	L Near	 0014	  code	
+_seg2  . . . . . . . . . . . . .	L Near	 001A	  code	
+_seg3  . . . . . . . . . . . . .	L Near	 0021	  code	
+_seg4  . . . . . . . . . . . . .	L Near	 0028	  code	
+_seg5  . . . . . . . . . . . . .	L Near	 002C	  code	
+_seg6  . . . . . . . . . . . . .	L Near	 0030	  code	
+_seg7  . . . . . . . . . . . . .	L Near	 0037	  code	
+_seg8  . . . . . . . . . . . . .	L Near	 003C	  code	
+_seg9  . . . . . . . . . . . . .	L Near	 0040	  code	
+_sum . . . . . . . . . . . . . .	L Near	 010E	  code	
+_write . . . . . . . . . . . . .	L Near	 00BB	  code	
+dispcrlf . . . . . . . . . . . .	L Near	 00FB	  code	
+dsiw1  . . . . . . . . . . . . .	L Near	 00CA	  code	
+dsiw2  . . . . . . . . . . . . .	L Near	 00D8	  code	
+dsiw3  . . . . . . . . . . . . .	L Near	 00DC	  code	
+dsiw4  . . . . . . . . . . . . .	L Near	 00EB	  code	
+dsiw5  . . . . . . . . . . . . .	L Near	 00F7	  code	
+ex . . . . . . . . . . . . . . .	L Near	 010A	  code	
+quit . . . . . . . . . . . . . .	L Near	 005C	  code	
+start  . . . . . . . . . . . . .	L Near	 0000	  code	
+t_buff_p . . . . . . . . . . . .	Byte	 0000	  data	
+t_buff_s . . . . . . . . . . . .	Byte	 0100	  data	
+t_r  . . . . . . . . . . . . . .	Byte	 0209	  data	
+t_w  . . . . . . . . . . . . . .	Byte	 0200	  data	
+
+	   0 Warnings
+	   0 Errors

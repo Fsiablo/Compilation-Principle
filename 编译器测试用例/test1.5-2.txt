@@ -1,0 +1,17 @@
+//for,��1���������ĺ�,��û�ж��������++������д��i=i+1
+main()
+
+{
+  int i=0;
+  int N=0;
+  int sum = 0;
+  N = read();
+  for(i=1;i<=N;i=i+1)
+{
+
+     sum = sum+i;
+    }
+
+  write(sum);
+
+}

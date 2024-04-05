@@ -1,0 +1,9 @@
+digraph {
+	S0 [shape=circle]
+	S0 -> S1 [label=a]
+	S1 [shape=circle]
+	S1 -> S2 [label="ϵ"]
+	S2 [shape=circle]
+	S2 -> S3 [label=b]
+	S3 [shape=doublecircle]
+}

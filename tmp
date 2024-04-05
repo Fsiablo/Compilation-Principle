@@ -1,0 +1,21 @@
+const int a=123,b=1235,asd=23231;
+const char k='a';
+int sc(int x,int b,int c)
+int sc(int x,int b,int c)
+int sc(int x,int b,int c)
+
+main() {
+       int x, y, z;
+       {
+       int x=1;
+       int y=2;
+       int a=3,b=3;
+       printf("123213123");
+       }
+       x = 9;
+       y = 3;
+       z = x - y * y - x % 3;
+       write(x);
+       write(y);
+       write(z);
+       }

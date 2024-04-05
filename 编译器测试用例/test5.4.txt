@@ -1,0 +1,25 @@
+// 测试数组
+// 输入数字n，输出从第1个到第n个的斐波那契数列
+int a[50];
+main()
+{
+    int i;
+    int n;
+    read(n);
+    a[0] = 0;
+    a[1] = 1;
+
+    i = 2;
+    while(i <= n)
+    {
+        a[i] = a[i-1] + a[i-2];
+        i = i + 1;
+    }
+    i = 1;
+    while(i <= n)
+    {
+      write(a[i]);
+        i = i + 1;
+    }
+    return 0;
+}

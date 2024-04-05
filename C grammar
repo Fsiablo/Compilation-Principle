@@ -1,0 +1,53 @@
+Program-> Ann_stc main ( ) Multi_stc Func_block
+Stc-> Ann_stc
+Stc-> Exe_stc
+Func_block-> Func_def Func_block
+Func_block->ε
+Ann_stc-> Val_ann
+Ann_stc->Func_ann
+Ann_stc->ε
+Val_ann->Const_ann
+Val_ann->Var_ann
+Const_ann->const Const_type Const_ann_list
+Const_type->int
+Const_type->char
+Const_type->float
+Const_ann_list->ID = Const ;
+Const_ann_list->ID = Const , Const_ann_list ;
+Var_ann->Var_type Var_ann_list
+Var_ann_list->Var_ann_single ;
+Var_ann_list->Var_ann_single , Var_ann_list ;
+Var_ann_single->ID
+Var_ann_single->ID = Expr
+Var_type->int
+Var_type->char
+Var_type->float
+Func_ann->Func_type ID ( Func_ann_val_list ) ;
+Func_type->int
+Func_type->char
+Func_type->float
+Func_type->void
+Func_ann_val_list->Func_ann_val
+Func_ann_val_list->ε
+Func_ann_val->Var_type
+Func_ann_val->Var_type , Func_ann_val
+Func_def->Func_type ID ( Func_def_val_list ) Multi_stc
+Func_def_val_list->Func_def_val
+Func_def_val_list->ε
+Func_def_val->Var_type ID
+Func_def_val->Var_type ID , Func_def_val
+Exe_stc->Exe_data_stc
+Exe_stc->Control_stc
+Exe_stc->Multi_stc
+Exe_data_stc->Set_stc
+Exe_data_stc->Func_use_stc
+Set_stc->Set_expr ;
+Func_use_stc->Func_use ;
+Control_stc->IF FOR WHILE DOWHILE RETURN
+Multi_stc->{ Stc_list }
+Stc_list->Stc
+Stc_list->Stc Stc_list
+IF->if ( Expr ) Stc
+IF->if ( Expr ) Stc else Stc
+For->for ( Expr ; Expr ; Expr ) Stc_loop
+WHILE->while ( Expr

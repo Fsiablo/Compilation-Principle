@@ -1,0 +1,194 @@
+Microsoft (R) Macro Assembler Version 6.11		    05/08/23 17:33:34
+tempfile.asm						     Page 1 - 1
+
+
+				assume cs:code,ds:data,ss:stack,es:extended
+ 0000				extended segment
+ 0000  0400 [				db 1024 dup (0)
+        00
+       ]
+ 0400				extended ends
+ 0000				stack segment
+ 0000  0400 [				db 1024 dup (0)
+        00
+       ]
+ 0400				stack ends
+ 0000				data segment
+ 0000  0100 [				t_buff_p db 256 dup (24h)
+        24
+       ]
+ 0100  0100 [				t_buff_s db 256 dup (0)
+        00
+       ]
+ 0200 0A 4F 75 74 70 75			t_w db 0ah,'Output:',0
+       74 3A 00
+ 0209 0A 49 6E 70 75 74			t_r db 0ah,'Input:',0
+       3A 00
+ 0211 0000				_x dw 0
+ 0213 0000				_sum dw 0
+ 0215				data ends
+ 0000				code segment
+ 0000				start:
+ 0000  B8 ---- R			mov ax,extended
+ 0003  8E C0				mov es,ax
+ 0005  B8 ---- R			mov ax,stack
+ 0008  8E D0				mov ss,ax
+ 000A  BC 0400				mov sp,1024
+ 000D  8B EC				mov bp,sp
+ 000F  B8 ---- R			mov ax,data
+ 0012  8E D8				mov ds,ax
+ 0014				_seg1:
+ 0014  B8 0000				mov ax,0
+ 0017  A3 0213 R			mov _sum,ax
+ 001A				_seg2:
+ 001A  B8 0001				mov ax,1
+ 001D  A3 0211 R			mov _x,ax
+ 0020				_seg3:
+ 0020  A1 0213 R			mov ax,_sum
+ 0023  03 06 0211 R			add ax,_x
+ 0027  26: A3 0000			mov es:[0],ax
+ 002B				_seg4:
+ 002B  26: A1 0000			mov ax,es:[0]
+ 002F  A3 0213 R			mov _sum,ax
+ 0032				_seg5:
+ 0032  A1 0211 R			mov ax,_x
+ 0035  83 C0 01				add ax,1
+ 0038  26: A3 0002			mov es:[2],ax
+ 003C				_seg6:
+ 003C  26: A1 0002			mov ax,es:[2]
+ 0040  A3 0211 R			mov _x,ax
+ 0043				_seg7:
+ 0043  BA 0001				mov dx,1
+ 0046  A1 0211 R			mov ax,_x
+ 0049  83 F8 0A				cmp ax,10
+ 004C  76 03				jna _le1
+ 004E  BA 0000				mov dx,0
+ 0051  26: 89 16 0004		_le1: mov es:[4],dx
+ 0056				_seg8:
+ 0056  26: A1 0004			mov ax,es:[4]
+ 005A  83 F8 00				cmp ax,0
+ 005D  74 05				je _ez1
+ 005F  EA ---- 0020 R			jmp far ptr _seg3
+ 0064  90			_ez1: nop
+ 0065				_seg9:
+ 0065  A1 0211 R			mov ax,_x
+ 0068  50				push ax
+ 0069				_seg10:
+ 0069  E8 0019				call _write
+ 006C  26: A3 0006			mov es:[6],ax
+ 0070  E8 0052				call dispcrlf
+ 0073				_seg11:
+ 0073  A1 0213 R			mov ax,_sum
+ 0076  50				push ax
+ 0077				_seg12:
+ 0077  E8 000B				call _write
+ 007A  26: A3 0008			mov es:[8],ax
+ 007E  E8 0044				call dispcrlf
+ 0081				quit:
+ 0081  B4 4C				mov ah,4ch
+ 0083  CD 21				int 21h
+ 0085				_write:
+ 0085  50			    push ax
+ 0086  53			    push bx
+ 0087  52			    push dx
+ 0088  85 C0			    test ax,ax;判断是零、正数或负数
+ 008A  75 08			    jnz dsiw1;不是零，跳转
+ 008C  B2 30			    mov dl,'0'
+ 008E  B4 02			    mov ah,2
+ 0090  CD 21			    int 21h
+ 0092  EB 2D			    jmp dsiw5;转向显示
+ 0094  79 0C			dsiw1:jns dsiw2;是正数，跳转
+ 0096  8B D8			    mov bx,ax
+ 0098  B2 2D			    mov dl,'-';是负数，显示负号
+ 009A  B4 02			    mov ah,2
+ 009C  CD 21			    int 21h
+ 009E  8B C3			    mov ax,bx
+ 00A0  F7 D8			    neg ax;数据求补（绝对值）
+ 00A2  BB 000A			dsiw2:mov bx,10
+ 00A5  53			    push bx;10压入堆栈，作为退出标志
+ 00A6  83 F8 00			dsiw3:cmp ax,0  ;数据（商）为零，转向保存
+ 00A9  74 0A			    jz dsiw4
+ 00AB  33 D2			    xor dx,dx   ;扩展被除数为DX.AX
+ 00AD  F7 F3			    div bx  ;数据除以10：DX.AX÷10
+ 00AF  80 C2 30			    add dl,30h  ;余数（0～9）转换为ASCII
+ 00B2  52			    push dx ;数据先低位后高位压入堆栈
+ 00B3  EB F1			    jmp dsiw3
+ 00B5  5A			dsiw4:pop dx
+ 00B6  80 FA 0A			    cmp dl,10
+ 00B9  74 06			    je dsiw5
+ 00BB  B4 02			    mov ah,2;
+ 00BD  CD 21			    int 21h
+ 00BF  EB F4			    jmp dsiw4
+ 00C1  5A			dsiw5:pop dx
+ 00C2  5B			    pop bx
+ 00C3  58			    pop ax
+ 00C4  C3			    ret
+ 00C5				dispcrlf:
+ 00C5  50			    push ax
+ 00C6  52			    push dx
+ 00C7  B2 0D			    mov dl,0dh  ;输出回车字符
+ 00C9  B4 02			    mov ah,2
+ 00CB  CD 21			    int 21h
+ 00CD  B2 0A			    mov dl, 0ah  ;输出换行字符
+ 00CF  CD 21			    int 21h
+ 00D1  5A			    pop dx
+ 00D2  58			    pop ax
+ 00D3  C3			    ret
+ 00D4  B0 4C			ex: mov al,4ch
+ 00D6  CD 21			    int 21h
+
+ 00D8				code ends
+				end start
+Microsoft (R) Macro Assembler Version 6.11		    05/08/23 17:33:34
+tempfile.asm						     Symbols 2 - 1
+
+
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+code . . . . . . . . . . . . . .	16 Bit	 00D8	  Para	  Private 
+data . . . . . . . . . . . . . .	16 Bit	 0215	  Para	  Private 
+extended . . . . . . . . . . . .	16 Bit	 0400	  Para	  Private 
+stack  . . . . . . . . . . . . .	16 Bit	 0400	  Para	  Private 
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+_ez1 . . . . . . . . . . . . . .	L Near	 0064	  code	
+_le1 . . . . . . . . . . . . . .	L Near	 0051	  code	
+_seg10 . . . . . . . . . . . . .	L Near	 0069	  code	
+_seg11 . . . . . . . . . . . . .	L Near	 0073	  code	
+_seg12 . . . . . . . . . . . . .	L Near	 0077	  code	
+_seg1  . . . . . . . . . . . . .	L Near	 0014	  code	
+_seg2  . . . . . . . . . . . . .	L Near	 001A	  code	
+_seg3  . . . . . . . . . . . . .	L Near	 0020	  code	
+_seg4  . . . . . . . . . . . . .	L Near	 002B	  code	
+_seg5  . . . . . . . . . . . . .	L Near	 0032	  code	
+_seg6  . . . . . . . . . . . . .	L Near	 003C	  code	
+_seg7  . . . . . . . . . . . . .	L Near	 0043	  code	
+_seg8  . . . . . . . . . . . . .	L Near	 0056	  code	
+_seg9  . . . . . . . . . . . . .	L Near	 0065	  code	
+_sum . . . . . . . . . . . . . .	Word	 0213	  data	
+_write . . . . . . . . . . . . .	L Near	 0085	  code	
+_x . . . . . . . . . . . . . . .	Word	 0211	  data	
+dispcrlf . . . . . . . . . . . .	L Near	 00C5	  code	
+dsiw1  . . . . . . . . . . . . .	L Near	 0094	  code	
+dsiw2  . . . . . . . . . . . . .	L Near	 00A2	  code	
+dsiw3  . . . . . . . . . . . . .	L Near	 00A6	  code	
+dsiw4  . . . . . . . . . . . . .	L Near	 00B5	  code	
+dsiw5  . . . . . . . . . . . . .	L Near	 00C1	  code	
+ex . . . . . . . . . . . . . . .	L Near	 00D4	  code	
+quit . . . . . . . . . . . . . .	L Near	 0081	  code	
+start  . . . . . . . . . . . . .	L Near	 0000	  code	
+t_buff_p . . . . . . . . . . . .	Byte	 0000	  data	
+t_buff_s . . . . . . . . . . . .	Byte	 0100	  data	
+t_r  . . . . . . . . . . . . . .	Byte	 0209	  data	
+t_w  . . . . . . . . . . . . . .	Byte	 0200	  data	
+
+	   0 Warnings
+	   0 Errors

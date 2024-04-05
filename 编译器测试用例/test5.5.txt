@@ -1,0 +1,38 @@
+//测试数组
+//排序
+main() 
+{
+	int a[5];
+	int b=5;
+	int i = 0;
+	int j=0;
+	int temp;
+	while(i<b)
+	{
+		a[i]= read();
+		i = i+1;
+	}
+	for(i=0;i<5;i++) {  //打印原始数据
+	    write(a[i]);
+	    write(' ');
+	}
+	write('\n');
+	for(i=3;i>=0;i=i-1)
+	{
+		for(j=0;j<=i;j=j+1)
+		{	
+			b = j+1;
+			if(a[j]>a[b])
+			{
+				temp=a[j];
+				a[j]=a[b];
+				a[b]=temp;
+			}
+		}
+		for(i=0;i<5;i++) {  //打印交换后的数据
+	   		 write(a[i]);
+			 write(' ');
+		}
+		write('\n');
+	}
+}
